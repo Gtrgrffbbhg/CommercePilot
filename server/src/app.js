@@ -5,6 +5,7 @@ import { createRepository } from './repositories/index.js';
 import { createCustomerService } from './services/customerService.js';
 import { createOrderService } from './services/orderService.js';
 import { createMetricsService } from './services/metricsService.js';
+import { createIntelligenceService } from './services/intelligenceService.js';
 import { createHealthRouter } from './routes/health.js';
 import { createMetaRouter } from './routes/meta.js';
 import { createCustomersRouter } from './routes/customers.js';
@@ -40,6 +41,7 @@ export function createApp({ repository, config = {} } = {}) {
   const customerService = createCustomerService(activeRepo);
   const orderService = createOrderService(activeRepo);
   const metricsService = createMetricsService(activeRepo);
+  const intelligenceService = createIntelligenceService(activeRepo);
 
   // Attach X-Data-Source header to every API response
   const dataSource = config.DATA_SOURCE || 'demo';
@@ -51,7 +53,7 @@ export function createApp({ repository, config = {} } = {}) {
   // API Routes
   app.use('/api/health', createHealthRouter());
   app.use('/api/meta', createMetaRouter(activeRepo));
-  app.use('/api/customers', createCustomersRouter(customerService));
+  app.use('/api/customers', createCustomersRouter(customerService, intelligenceService));
   app.use('/api/orders', createOrdersRouter(orderService));
   app.use('/api/metrics', createMetricsRouter(metricsService));
 

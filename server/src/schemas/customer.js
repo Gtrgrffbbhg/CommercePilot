@@ -55,3 +55,26 @@ export const customerListResponseSchema = z.object({
   summary: customerSummarySchema.optional(),
 });
 
+export const customerIntelligenceSchema = z.object({
+  customerId: z.string(),
+  evaluatedAt: z.string().datetime(),
+  metrics: z.object({
+    daysSinceLastOrder: z.number().int().nonnegative().nullable(),
+    orderCount: z.number().int().nonnegative(),
+    totalSpent: z.number().nonnegative(),
+    averageOrderValue: z.number().nonnegative(),
+  }),
+  rfm: z.object({
+    segment: z.enum(['Champions', 'Loyal', 'Recent Buyer', 'At Risk', 'Hibernating', 'Inactive Prospect']),
+    riskLevel: z.enum(['Low', 'Moderate', 'High']),
+    reasons: z.array(z.string()),
+  }),
+  recommendation: z.object({
+    action: z.string(),
+    suggestedOffer: z.string(),
+    subject: z.string(),
+    body: z.string(),
+    disclaimer: z.string(),
+  }),
+});
+

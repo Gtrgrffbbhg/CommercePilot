@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { validate } from '../middleware/validate.js';
 import { customerQuerySchema } from '../schemas/customer.js';
 
-export function createCustomersRouter(customerService) {
+export function createCustomersRouter(customerService, intelligenceService) {
   const router = Router();
 
   const customerParamsSchema = z.object({
@@ -14,6 +14,18 @@ export function createCustomersRouter(customerService) {
     try {
       const result = await customerService.listCustomers(req.query);
       res.json(result);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.get('/:id/intelligence', validate({ params: customerParamsSchema }), async (req, res, next) => {
+    try {
+      if (!intelligenceService) {
+        return res.status(501).json({ error: 'Intelligence service not configured' });
+      }
+      const intelligence = await intelligenceService.getCustomerIntelligence(req.params.id);
+      res.json(intelligence);
     } catch (err) {
       next(err);
     }

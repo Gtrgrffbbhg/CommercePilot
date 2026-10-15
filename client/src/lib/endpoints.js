@@ -80,3 +80,7 @@ export function getOrdersByCustomer({ customerId, page = 1, pageSize = 20, statu
   return apiClient(`/api/orders?${params.toString()}`, { signal });
 }
 
+export function getCustomerIntelligence(id, signal) {
+  return apiClient(`/api/customers/${encodeURIComponent(id)}/intelligence`, { signal });
+}
+

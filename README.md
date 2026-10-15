@@ -124,9 +124,10 @@ All responses are JSON and include the `X-Data-Source` header.
 | :--- | :--- | :--- |
 | `GET` | `/api/health` | Returns server health and uptime |
 | `GET` | `/api/meta` | Returns system metadata, data source, and entity counts |
-| `GET` | `/api/customers` | Paginated customer list (`page`, `pageSize`, `sortBy`, `sortDir`) |
-| `GET` | `/api/customers/:id` | Single customer details plus their 10 most recent orders |
-| `GET` | `/api/orders` | Paginated order list (`page`, `pageSize`, `status`, `from`, `to`) |
+| `GET` | `/api/customers` | Searchable, filterable, sortable customer list + directory summary |
+| `GET` | `/api/customers/:id` | Single customer profile with recent order drill-down |
+| `GET` | `/api/customers/:id/intelligence` | Deterministic RFM segment, churn risk score, and tailored retention outreach draft |
+| `GET` | `/api/orders` | Paginated order list (`page`, `pageSize`, `status`, `from`, `to`, `customerId`) |
 | `GET` | `/api/orders/:id` | Single order details |
 | `GET` | `/api/metrics/summary`| Revenue, orders, AOV, active/new customers, and delta % |
 | `GET` | `/api/metrics/timeseries`| Continuous timeseries points (`interval=day\|week\|month`) |
@@ -158,24 +159,54 @@ curl "http://localhost:4000/api/metrics/order-breakdown?from=2024-01-01T00:00:00
 
 ---
 
-## 7. Testing
+## 7. Customer Retention Intelligence Methodology
 
-CommercePilot maintains 100% passing automated tests:
+CommercePilot incorporates an explainable, deterministic **Customer Retention Intelligence Engine**:
+
+### Deterministic RFM Heuristics
+- **Recency ($R$)**: Days elapsed between the customer's `lastOrderAt` and the evaluation timestamp.
+- **Frequency ($F$)**: Lifetime count of revenue-generating orders (`processing`, `completed`).
+- **Monetary ($M$)**: Total lifetime realized spend (`totalSpent`).
+
+### Segment & Churn Risk Classification Rules
+| Segment | Criteria | Churn Risk | Recommended Strategy |
+| :--- | :--- | :--- | :--- |
+| **Champions** | $R \le 45\text{d}$, $F \ge 3$, $M \ge \$250$ | **Low** | VIP appreciation, exclusive collection early access |
+| **Loyal** | $R \le 90\text{d}$, $F \ge 2$ | **Low** | Category cross-sell, loyalty reward credits |
+| **Recent Buyer** | $R \le 45\text{d}$, $F = 1$ | **Moderate** | 2nd-order conversion bounceback sequence |
+| **At Risk** | $R > 90\text{d}$, $F \ge 2$ | **High** | Proactive win-back sequence with retention incentive |
+| **Hibernating** | $R > 90\text{d}$, $F = 1$ | **Moderate/High** | Re-engagement survey and catalog refresh |
+| **Inactive Prospect** | $F = 0$ (no revenue orders) | **Low** | Welcome onboarding sequence |
+
+### Retention Outreach Draft
+For each evaluated profile, the engine generates an explainable action plan:
+- Assessment factors explicitly listing supporting dates, order counts, and spending metrics.
+- A personalized email draft referencing the customer's first name, purchase count, and most recently purchased line item.
+- An illustrative suggested promotion (e.g., `COMEBACK15`, `VIPACCESS`).
+
+> [!NOTE]
+> **Deterministic vs. Agentic Distinction:** This engine is 100% deterministic, rule-based, and explainable. It does not invoke an external probabilistic LLM or make ungrounded claims. Suggested promotional codes are illustrative demo suggestions only, and no emails are dispatched automatically.
+
+---
+
+## 8. Testing
+
+CommercePilot maintains 100% passing automated tests across server and client:
 
 ```powershell
-# Run all server and client test suites (83 tests total)
+# Run all server and client test suites (104 tests total)
 npm test
 
-# Run only server tests (21 tests: API + generator)
+# Run only server tests (33 tests: API, generator, and intelligence)
 npm test --prefix server
 
-# Run only client tests (62 tests: format, dateRange, chartData, routing, KpiCard, ChartCard)
+# Run only client tests (71 tests: formatting, routing, cards, directory, details, intelligence)
 npm test --prefix client
 ```
 
 ---
 
-## 8. Where to Start Reading the Code
+## 9. Where to Start Reading the Code
 
 Follow this recommended study order to understand the codebase file-by-file:
 
@@ -183,23 +214,16 @@ Follow this recommended study order to understand the codebase file-by-file:
 2. [docs/ARCHITECTURE.md](file:///c:/Users/Kumar%20patil/Desktop/kilowott/docs/ARCHITECTURE.md) — High-level mental model and end-to-end request lifecycle.
 3. [docs/DATA_CONTRACTS.md](file:///c:/Users/Kumar%20patil/Desktop/kilowott/docs/DATA_CONTRACTS.md) — The single source of truth for Customer, Order, and Metrics schemas.
 4. [server/src/constants.js](file:///c:/Users/Kumar%20patil/Desktop/kilowott/server/src/constants.js) — Lifecycle statuses, revenue definitions, and pagination boundaries.
-5. [server/src/utils/money.js](file:///c:/Users/Kumar%20patil/Desktop/kilowott/server/src/utils/money.js) — Integer-cent arithmetic helpers that eliminate floating-point drift.
-6. [server/src/schemas/metrics.js](file:///c:/Users/Kumar%20patil/Desktop/kilowott/server/src/schemas/metrics.js) — KPI summary, timeseries, and order-breakdown schemas.
-7. [server/src/services/metricsService.js](file:///c:/Users/Kumar%20patil/Desktop/kilowott/server/src/services/metricsService.js) — Revenue, AOV, returning customer rate, breakdown, and delta calculations.
-8. [server/src/routes/metrics.js](file:///c:/Users/Kumar%20patil/Desktop/kilowott/server/src/routes/metrics.js) — Metrics endpoints: summary, timeseries, and order-breakdown.
-9. [client/src/lib/dateRange.js](file:///c:/Users/Kumar%20patil/Desktop/kilowott/client/src/lib/dateRange.js) — Preset/custom range resolution, URL parsing/serialization, validation.
-10. [client/src/lib/chartData.js](file:///c:/Users/Kumar%20patil/Desktop/kilowott/client/src/lib/chartData.js) — Pure transformation functions for Recharts data structures.
-11. [client/src/lib/kpiConfig.js](file:///c:/Users/Kumar%20patil/Desktop/kilowott/client/src/lib/kpiConfig.js) — Metadata for the 7 executive KPI cards.
-12. [client/src/hooks/useDateRange.js](file:///c:/Users/Kumar%20patil/Desktop/kilowott/client/src/hooks/useDateRange.js) — URL-synced date range hook with compare mode toggle.
-13. [client/src/hooks/useDashboardData.js](file:///c:/Users/Kumar%20patil/Desktop/kilowott/client/src/hooks/useDashboardData.js) — Coordinates dashboard section queries with AbortController and refetch.
-14. [client/src/pages/DashboardPage.jsx](file:///c:/Users/Kumar%20patil/Desktop/kilowott/client/src/pages/DashboardPage.jsx) — Executive dashboard assembling all KPI, chart, and table sections.
-15. [client/src/App.jsx](file:///c:/Users/Kumar%20patil/Desktop/kilowott/client/src/App.jsx) — Client routing (`/`, `/foundation-check`, and 404 catch-all).
+5. [server/src/services/intelligenceService.js](file:///c:/Users/Kumar%20patil/Desktop/kilowott/server/src/services/intelligenceService.js) — Deterministic RFM segmentation, churn risk scoring, and tailored retention outreach draft generator.
+6. [server/src/routes/customers.js](file:///c:/Users/Kumar%20patil/Desktop/kilowott/server/src/routes/customers.js) — Customer endpoints: directory list, customer detail, and retention intelligence.
+7. [client/src/pages/CustomersPage.jsx](file:///c:/Users/Kumar%20patil/Desktop/kilowott/client/src/pages/CustomersPage.jsx) — Customer directory with search, filter tabs, sorting, and summary metrics.
+8. [client/src/pages/CustomerDetailPage.jsx](file:///c:/Users/Kumar%20patil/Desktop/kilowott/client/src/pages/CustomerDetailPage.jsx) — Customer profile, Customer Retention Intelligence Card, copy action, and order history table.
 
 ---
 
-## 9. Known Limitations (Prompt 2)
+## 10. Known Limitations
 
-- **Authentication:** No user authentication or role-based access control is implemented yet.
-- **Storage:** Data is served from deterministic in-memory demo generation. MongoDB persistence is scheduled for Milestone 5.
-- **Live Sync:** WooCommerce REST API integration is scheduled for Milestone 6; no live WordPress connection exists.
-- **Customer Directory & Details:** Interactive customer drawer and deep-dive filtering are Prompt 3 scope.
+- **Authentication:** User authentication and role-based access control are not yet implemented. Do not expose this instance to an untrusted public network.
+- **Storage:** Data is currently served from deterministic in-memory demo simulation. MongoDB persistence is scheduled for future milestones.
+- **WooCommerce Live Sync:** WooCommerce REST API integration is planned for future milestones; no live WordPress connection is currently active.
+- **Outreach Automation:** The Customer Retention Intelligence feature produces structured drafts and recommendations; it does not connect to an SMTP server or auto-send promotional communications.

@@ -1,6 +1,7 @@
 import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, waitFor, act } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 
 // ---------------------------------------------------------------------------
@@ -25,6 +26,23 @@ vi.mock('../src/lib/endpoints.js', () => ({
     }],
     pagination: { page: 1, pageSize: 20, total: 1, totalPages: 1 },
   }),
+  getCustomerIntelligence: vi.fn().mockResolvedValue({
+    customerId: 'cus_00001',
+    evaluatedAt: '2026-10-15T00:00:00.000Z',
+    metrics: { daysSinceLastOrder: 14, orderCount: 3, totalSpent: 420.5, averageOrderValue: 140.17 },
+    rfm: {
+      segment: 'Champions',
+      riskLevel: 'Low',
+      reasons: ['Recent purchase placed 14 days ago', 'High purchase frequency (3 orders)', 'Top lifetime spend ($420.50)'],
+    },
+    recommendation: {
+      action: 'VIP appreciation & early collection access',
+      suggestedOffer: 'VIP early access preview (Code: VIPACCESS - illustrative suggestion)',
+      subject: 'Emma, a special thank you from our team',
+      body: 'Hi Emma,\n\nWe wanted to reach out and express our sincere appreciation for your ongoing support...',
+      disclaimer: 'Deterministic rule-based output based on historical purchase data. Not an automated email dispatch; suggested offers are illustrative examples only.',
+    },
+  }),
   getCustomers: vi.fn(),
   getMetrics: vi.fn(),
   getOrderBreakdown: vi.fn(),
@@ -43,8 +61,7 @@ const mockNotFoundError = Object.assign(
 import * as endpoints from '../src/lib/endpoints.js';
 
 describe('CustomerDetailPage Component', () => {
-  it('renders customer profile information, metrics, and order history', async () => {
-    // No beforeEach — factory implementations are used as-is.
+  it('renders customer profile, spending metrics, retention intelligence card, and order history', async () => {
     await act(async () => {
       render(
         <MemoryRouter initialEntries={['/customers/cus_00001']}>
@@ -65,8 +82,18 @@ describe('CustomerDetailPage Component', () => {
 
     // Spending metrics
     expect(screen.getByText('Lifetime Realized Spend')).toBeTruthy();
-    expect(screen.getByText(/\$420\.50/)).toBeTruthy();
+    expect(screen.getAllByText(/\$420\.50/).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Average Order Value (AOV)')).toBeTruthy();
+
+    // Customer Retention Intelligence Card
+    await waitFor(() => {
+      expect(screen.getByText('Customer Retention Intelligence')).toBeTruthy();
+      expect(screen.getByText('Champions')).toBeTruthy();
+      expect(screen.getByText('Low Risk')).toBeTruthy();
+      expect(screen.getByText('VIP appreciation & early collection access')).toBeTruthy();
+      expect(screen.getByText(/Recent purchase placed 14 days ago/)).toBeTruthy();
+      expect(screen.getByText('Copy Draft')).toBeTruthy();
+    });
 
     // Order history table
     await waitFor(() => {
@@ -76,10 +103,36 @@ describe('CustomerDetailPage Component', () => {
     }, { timeout: 3000 });
   });
 
+  it('triggers copy action on retention draft button click', async () => {
+    const user = userEvent.setup();
+
+    await act(async () => {
+      render(
+        <MemoryRouter initialEntries={['/customers/cus_00001']}>
+          <Routes>
+            <Route path="/customers/:id" element={<CustomerDetailPage />} />
+          </Routes>
+        </MemoryRouter>
+      );
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Copy Draft')).toBeTruthy();
+    });
+
+    const copyBtn = screen.getByRole('button', { name: /copy draft/i });
+    await user.click(copyBtn);
+
+    // Verify button transitions to 'Copied!'
+    await waitFor(() => {
+      expect(screen.getByText('Copied!')).toBeTruthy();
+    });
+  });
+
   it('renders a friendly not-found view when customer ID does not exist', async () => {
-    // Override only for this test
     endpoints.getCustomerById.mockRejectedValueOnce(mockNotFoundError);
     endpoints.getOrdersByCustomer.mockResolvedValueOnce({ data: [], pagination: { total: 0 } });
+    endpoints.getCustomerIntelligence.mockRejectedValueOnce(mockNotFoundError);
 
     render(
       <MemoryRouter initialEntries={['/customers/cus_invalid_999']}>
