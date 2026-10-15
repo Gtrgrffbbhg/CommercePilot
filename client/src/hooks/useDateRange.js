@@ -8,8 +8,11 @@ import {
   getPreviousRange,
 } from '../lib/dateRange.js';
 
-export function useDateRange(referenceNow = new Date()) {
+export function useDateRange(referenceNow) {
   const [searchParams, setSearchParams] = useSearchParams();
+
+  // If no referenceNow was provided, memoize a stable Date for this component lifecycle
+  const stableNow = useMemo(() => referenceNow || new Date(), [referenceNow]);
 
   // Extract date range specification from URL parameters
   const rangeSpec = useMemo(() => {
@@ -23,7 +26,7 @@ export function useDateRange(referenceNow = new Date()) {
 
   // Resolve specification into concrete UTC ISO timestamps
   const resolved = useMemo(() => {
-    const range = resolveRange(rangeSpec, referenceNow);
+    const range = resolveRange(rangeSpec, stableNow);
     const interval = getInterval(range.from, range.to);
     const previous = getPreviousRange(range.from, range.to);
     return {
@@ -33,7 +36,7 @@ export function useDateRange(referenceNow = new Date()) {
       prevFrom: previous.from,
       prevTo: previous.to,
     };
-  }, [rangeSpec, referenceNow]);
+  }, [rangeSpec, stableNow]);
 
   // Update date range in URL parameters
   const setRange = useCallback(
