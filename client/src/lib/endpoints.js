@@ -84,3 +84,12 @@ export function getCustomerIntelligence(id, signal) {
   return apiClient(`/api/customers/${encodeURIComponent(id)}/intelligence`, { signal });
 }
 
+export function getInsights({ from, to, severity } = {}, signal) {
+  const params = new URLSearchParams();
+  if (from) params.set('from', from);
+  if (to) params.set('to', to);
+  if (severity && severity !== 'all') params.set('severity', severity);
+  const query = params.toString();
+  return apiClient(`/api/insights${query ? `?${query}` : ''}`, { signal });
+}
+

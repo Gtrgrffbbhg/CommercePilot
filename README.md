@@ -153,13 +153,36 @@ curl "http://localhost:4000/api/orders?status=processing&pageSize=10"
 # 6. Retrieve order status breakdown and category sales (last 30 days)
 curl "http://localhost:4000/api/metrics/order-breakdown"
 
-# 7. Retrieve order breakdown for a specific date range
-curl "http://localhost:4000/api/metrics/order-breakdown?from=2024-01-01T00:00:00.000Z&to=2024-03-31T23:59:59.999Z"
+# 7. Retrieve business insights & actionable recommendations
+curl "http://localhost:4000/api/insights"
+
+# 8. Retrieve filtered insights by severity (e.g. warning, critical, opportunity)
+curl "http://localhost:4000/api/insights?severity=warning"
 ```
 
 ---
 
-## 7. Customer Retention Intelligence Methodology
+## 7. Business Insights & Recommendations Engine
+
+CommercePilot includes a dedicated **Business Insights & Actionable Playbook Engine** (`GET /api/insights`) and UI (`/insights`) that converts verified sales and customer activity into explainable decisions:
+
+### Core Analysis Dimensions & Decision Rules
+| Dimension | Key Heuristic / Condition | Output Severity | Action Playbook |
+| :--- | :--- | :--- | :--- |
+| **Revenue & Order Trajectory** | Period-over-period revenue contraction $\ge 10\%$ or growth $\ge 10\%$ | `warning` / `positive` | Retention push or marketing reinvestment |
+| **Category Concentration** | Top category represents $\ge 35\%$ of merchandise gross sales | `opportunity` / `positive` | Cross-category product bundles and merchandising expansion |
+| **Customer Churn Risk** | Ratio of repeat buyers inactive for $> 90$ days | `critical` / `warning` / `positive` | Automated win-back campaigns and personalized incentives |
+| **Basket Size & Multi-Item AOV** | Ratio of orders containing only 1 unit/item $\ge 50\%$ | `opportunity` / `positive` | Post-purchase 1-click upsells and volume bundle thresholds |
+| **Operational & Fulfillment Health** | Refund rate $\ge 8\%$ (critical), $\ge 4\%$ (warning), or $< 4\%$ | `critical` / `warning` / `positive` | Return root cause triage or quality benchmark validation |
+
+### Store Health Score
+- **Scale:** 0 to 100 calculated deterministically from performance across the 5 core dimensions.
+- **Rating Categories:** `Strong` (85–100), `Healthy` (70–84), `Needs Attention` (50–69), and `Critical` (< 50).
+- **Explainability:** Each insight card provides full mathematical transparency (`supportingData`), summary context, and an immediate operational action playbook with estimated impact.
+
+---
+
+## 8. Customer Retention Intelligence Methodology
 
 CommercePilot incorporates an explainable, deterministic **Customer Retention Intelligence Engine**:
 
@@ -189,39 +212,40 @@ For each evaluated profile, the engine generates an explainable action plan:
 
 ---
 
-## 8. Testing
+## 9. Testing
 
 CommercePilot maintains 100% passing automated tests across server and client:
 
 ```powershell
-# Run all server and client test suites (104 tests total)
+# Run all server and client test suites (116 tests total)
 npm test
 
-# Run only server tests (33 tests: API, generator, and intelligence)
+# Run only server tests (41 tests: API, generator, intelligence, and insights)
 npm test --prefix server
 
-# Run only client tests (71 tests: formatting, routing, cards, directory, details, intelligence)
+# Run only client tests (75 tests: formatting, routing, cards, directory, details, intelligence, and insights)
 npm test --prefix client
 ```
 
 ---
 
-## 9. Where to Start Reading the Code
+## 10. Where to Start Reading the Code
 
 Follow this recommended study order to understand the codebase file-by-file:
 
 1. [AGENTS.md](file:///c:/Users/Kumar%20patil/Desktop/kilowott/AGENTS.md) — The persistent operating rules governing all code in this repository.
 2. [docs/ARCHITECTURE.md](file:///c:/Users/Kumar%20patil/Desktop/kilowott/docs/ARCHITECTURE.md) — High-level mental model and end-to-end request lifecycle.
-3. [docs/DATA_CONTRACTS.md](file:///c:/Users/Kumar%20patil/Desktop/kilowott/docs/DATA_CONTRACTS.md) — The single source of truth for Customer, Order, and Metrics schemas.
+3. [docs/DATA_CONTRACTS.md](file:///c:/Users/Kumar%20patil/Desktop/kilowott/docs/DATA_CONTRACTS.md) — The single source of truth for Customer, Order, Metrics, and Insights schemas.
 4. [server/src/constants.js](file:///c:/Users/Kumar%20patil/Desktop/kilowott/server/src/constants.js) — Lifecycle statuses, revenue definitions, and pagination boundaries.
-5. [server/src/services/intelligenceService.js](file:///c:/Users/Kumar%20patil/Desktop/kilowott/server/src/services/intelligenceService.js) — Deterministic RFM segmentation, churn risk scoring, and tailored retention outreach draft generator.
-6. [server/src/routes/customers.js](file:///c:/Users/Kumar%20patil/Desktop/kilowott/server/src/routes/customers.js) — Customer endpoints: directory list, customer detail, and retention intelligence.
-7. [client/src/pages/CustomersPage.jsx](file:///c:/Users/Kumar%20patil/Desktop/kilowott/client/src/pages/CustomersPage.jsx) — Customer directory with search, filter tabs, sorting, and summary metrics.
-8. [client/src/pages/CustomerDetailPage.jsx](file:///c:/Users/Kumar%20patil/Desktop/kilowott/client/src/pages/CustomerDetailPage.jsx) — Customer profile, Customer Retention Intelligence Card, copy action, and order history table.
+5. [server/src/services/insightsService.js](file:///c:/Users/Kumar%20patil/Desktop/kilowott/server/src/services/insightsService.js) — Deterministic store health score and 5-dimension insights engine.
+6. [server/src/services/intelligenceService.js](file:///c:/Users/Kumar%20patil/Desktop/kilowott/server/src/services/intelligenceService.js) — Deterministic RFM segmentation, churn risk scoring, and tailored retention outreach draft generator.
+7. [client/src/pages/InsightsPage.jsx](file:///c:/Users/Kumar%20patil/Desktop/kilowott/client/src/pages/InsightsPage.jsx) — Store health score dial, severity filter tabs, insight cards, and action playbooks.
+8. [client/src/pages/CustomersPage.jsx](file:///c:/Users/Kumar%20patil/Desktop/kilowott/client/src/pages/CustomersPage.jsx) — Customer directory with search, filter tabs, sorting, and summary metrics.
+9. [client/src/pages/CustomerDetailPage.jsx](file:///c:/Users/Kumar%20patil/Desktop/kilowott/client/src/pages/CustomerDetailPage.jsx) — Customer profile, Customer Retention Intelligence Card, copy action, and order history table.
 
 ---
 
-## 10. Known Limitations
+## 11. Known Limitations
 
 - **Authentication:** User authentication and role-based access control are not yet implemented. Do not expose this instance to an untrusted public network.
 - **Storage:** Data is currently served from deterministic in-memory demo simulation. MongoDB persistence is scheduled for future milestones.

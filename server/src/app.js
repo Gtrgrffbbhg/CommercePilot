@@ -6,11 +6,13 @@ import { createCustomerService } from './services/customerService.js';
 import { createOrderService } from './services/orderService.js';
 import { createMetricsService } from './services/metricsService.js';
 import { createIntelligenceService } from './services/intelligenceService.js';
+import { createInsightsService } from './services/insightsService.js';
 import { createHealthRouter } from './routes/health.js';
 import { createMetaRouter } from './routes/meta.js';
 import { createCustomersRouter } from './routes/customers.js';
 import { createOrdersRouter } from './routes/orders.js';
 import { createMetricsRouter } from './routes/metrics.js';
+import { createInsightsRouter } from './routes/insights.js';
 import { notFound } from './middleware/notFound.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
@@ -42,6 +44,7 @@ export function createApp({ repository, config = {} } = {}) {
   const orderService = createOrderService(activeRepo);
   const metricsService = createMetricsService(activeRepo);
   const intelligenceService = createIntelligenceService(activeRepo);
+  const insightsService = createInsightsService(activeRepo);
 
   // Attach X-Data-Source header to every API response
   const dataSource = config.DATA_SOURCE || 'demo';
@@ -56,6 +59,7 @@ export function createApp({ repository, config = {} } = {}) {
   app.use('/api/customers', createCustomersRouter(customerService, intelligenceService));
   app.use('/api/orders', createOrdersRouter(orderService));
   app.use('/api/metrics', createMetricsRouter(metricsService));
+  app.use('/api/insights', createInsightsRouter(insightsService));
 
   // Catch-all 404 for unknown routes
   app.use(notFound);

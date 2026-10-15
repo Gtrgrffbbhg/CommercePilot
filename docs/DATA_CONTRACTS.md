@@ -148,6 +148,51 @@ Response object:
 
 ---
 
+---
+
+## 5. Business Insights Contract (`GET /api/insights`)
+
+Query Parameters:
+- `from`: ISO 8601 UTC timestamp string (optional)
+- `to`: ISO 8601 UTC timestamp string (optional)
+- `severity`: `'all' | 'positive' | 'opportunity' | 'warning' | 'critical'` (default: `'all'`)
+
+Response Schema:
+```typescript
+interface InsightsResponse {
+  evaluatedAt: string; // ISO UTC
+  range: {
+    from: string; // ISO UTC
+    to: string; // ISO UTC
+  };
+  currency: string; // e.g. "USD"
+  summary: {
+    totalInsights: number;
+    bySeverity: {
+      critical: number;
+      warning: number;
+      opportunity: number;
+      positive: number;
+    };
+    businessHealthScore: number; // 0 - 100
+    healthRating: 'Strong' | 'Healthy' | 'Needs Attention' | 'Critical';
+  };
+  insights: Array<{
+    id: string;
+    title: string;
+    category: 'revenue_trend' | 'merchandise' | 'retention' | 'aov_growth' | 'fulfillment';
+    severity: 'positive' | 'opportunity' | 'warning' | 'critical';
+    summary: string;
+    explanation: string;
+    supportingData: Record<string, string | number | boolean | null>;
+    recommendedAction: string;
+    impactEstimate?: string;
+  }>;
+}
+```
+
+---
+
 ## Planned WooCommerce mapping (NOT YET VERIFIED against a real API)
 
 > [!WARNING]

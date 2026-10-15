@@ -19,6 +19,10 @@ vi.mock('../src/pages/CustomerDetailPage.jsx', () => ({
   CustomerDetailPage: () => <div data-testid="customer-detail-page">Customer Detail</div>,
 }));
 
+vi.mock('../src/pages/InsightsPage.jsx', () => ({
+  InsightsPage: () => <div data-testid="insights-page">Insights Page</div>,
+}));
+
 vi.mock('../src/pages/FoundationCheck.jsx', () => ({
   FoundationCheck: () => <div data-testid="foundation-check-page">Foundation Check</div>,
 }));
@@ -32,6 +36,7 @@ vi.mock('../src/components/layout/AppShell.jsx', () => ({
 import { DashboardPage } from '../src/pages/DashboardPage.jsx';
 import { CustomersPage } from '../src/pages/CustomersPage.jsx';
 import { CustomerDetailPage } from '../src/pages/CustomerDetailPage.jsx';
+import { InsightsPage } from '../src/pages/InsightsPage.jsx';
 import { FoundationCheck } from '../src/pages/FoundationCheck.jsx';
 import { AppShell } from '../src/components/layout/AppShell.jsx';
 
@@ -41,6 +46,7 @@ function renderAtPath(path) {
     <MemoryRouter initialEntries={[path]}>
       <Routes>
         <Route path="/" element={<DashboardPage />} />
+        <Route path="/insights" element={<InsightsPage />} />
         <Route path="/customers" element={<CustomersPage />} />
         <Route path="/customers/:id" element={<CustomerDetailPage />} />
         <Route path="/foundation-check" element={<FoundationCheck />} />
@@ -66,6 +72,11 @@ describe('App routing', () => {
   it('renders CustomersPage at "/customers"', () => {
     renderAtPath('/customers');
     expect(screen.getByTestId('customers-page')).toBeTruthy();
+  });
+
+  it('renders InsightsPage at "/insights"', () => {
+    renderAtPath('/insights');
+    expect(screen.getByTestId('insights-page')).toBeTruthy();
   });
 
   it('renders CustomerDetailPage at "/customers/:id"', () => {
