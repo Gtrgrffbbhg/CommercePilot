@@ -8,6 +8,7 @@ import { formatCurrency, formatNumber, formatDate, formatPercent } from '../lib/
 
 export function FoundationCheck() {
   const { data: health, error: healthError, reload: reloadHealth } = useApi('/api/health');
+  const { data: wcHealth, loading: wcLoading, error: wcError, reload: reloadWcHealth } = useApi('/api/woocommerce/health');
   const { data: meta, loading: metaLoading, error: metaError, reload: reloadMeta } = useApi('/api/meta');
   const { data: summary, loading: summaryLoading, error: summaryError, reload: reloadSummary } = useApi('/api/metrics/summary');
   const { data: customersData, loading: customersLoading, error: customersError, reload: reloadCustomers } = useApi('/api/customers?pageSize=5');
@@ -31,6 +32,60 @@ export function FoundationCheck() {
             </div>
           </div>
         </div>
+
+        {/* WooCommerce Live / Demo Connection Status Banner */}
+        <section className="rounded-xl border border-slate-800 bg-slate-900/60 p-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800 mb-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-white">WooCommerce Integration Health</h3>
+                {wcHealth?.connected ? (
+                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    Live Store Connected
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/30">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                    Demo Mode Fallback Active
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-slate-400 mt-1">Endpoint: /api/woocommerce/health</p>
+            </div>
+            <button
+              type="button"
+              onClick={reloadWcHealth}
+              disabled={wcLoading}
+              className="text-xs text-indigo-400 hover:text-indigo-300 font-medium px-2 py-1 rounded bg-indigo-950/40 border border-indigo-900/50 cursor-pointer self-start sm:self-auto disabled:opacity-50"
+            >
+              {wcLoading ? 'Checking...' : 'Check Connection'}
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs font-mono">
+            <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800">
+              <span className="text-[10px] text-slate-400 uppercase tracking-wide font-sans block">Target Store URL</span>
+              <span className="text-slate-200 mt-1 block truncate">
+                {wcHealth?.storeUrl || 'http://commercepilot-store.local'}
+              </span>
+            </div>
+            <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800">
+              <span className="text-[10px] text-slate-400 uppercase tracking-wide font-sans block">API Credentials</span>
+              <span className={`mt-1 block font-semibold ${wcHealth?.configured ? 'text-emerald-400' : 'text-amber-400'}`}>
+                {wcHealth?.configured ? 'Configured (Server-Side)' : 'Pending (Consumer Key & Secret)'}
+              </span>
+            </div>
+            <div className="p-3 rounded-lg bg-slate-950/60 border border-slate-800">
+              <span className="text-[10px] text-slate-400 uppercase tracking-wide font-sans block">Operating Status</span>
+              <span className="text-slate-300 mt-1 block">
+                {wcHealth?.connected
+                  ? 'Real API Connection Active'
+                  : wcHealth?.reason || 'Retaining safe deterministic demo fallback'}
+              </span>
+            </div>
+          </div>
+        </section>
 
         {/* Global Connection Alert if health fails */}
         {healthError && (

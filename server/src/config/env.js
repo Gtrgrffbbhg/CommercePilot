@@ -11,6 +11,7 @@ const envSchema = z.object({
   DATA_SOURCE: z.enum(['demo', 'mongodb', 'woocommerce']).default('demo'),
   DEMO_SEED: z.coerce.number().int().default(42),
   MONGODB_URI: z.string().optional(),
+  WOOCOMMERCE_STORE_URL: z.string().optional(),
   WOOCOMMERCE_URL: z.string().optional(),
   WOOCOMMERCE_CONSUMER_KEY: z.string().optional(),
   WOOCOMMERCE_CONSUMER_SECRET: z.string().optional(),

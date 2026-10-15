@@ -15,10 +15,12 @@ import { createOrdersRouter } from './routes/orders.js';
 import { createMetricsRouter } from './routes/metrics.js';
 import { createInsightsRouter } from './routes/insights.js';
 import { createCopilotRouter } from './routes/copilot.js';
+import { createWooCommerceRouter } from './routes/woocommerce.js';
+import { createWooCommerceClient } from './woocommerce/client.js';
 import { notFound } from './middleware/notFound.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
-export function createApp({ repository, config = {} } = {}) {
+export function createApp({ repository, config = {}, wcClient } = {}) {
   const app = express();
 
   // Disable Express signature header for security
@@ -49,6 +51,13 @@ export function createApp({ repository, config = {} } = {}) {
   const insightsService = createInsightsService(activeRepo);
   const copilotService = createCopilotService(activeRepo);
 
+  // WooCommerce REST API client with safe server-only config
+  const activeWcClient = wcClient ?? createWooCommerceClient({
+    storeUrl: config.WOOCOMMERCE_STORE_URL || config.WOOCOMMERCE_URL,
+    consumerKey: config.WOOCOMMERCE_CONSUMER_KEY,
+    consumerSecret: config.WOOCOMMERCE_CONSUMER_SECRET,
+  });
+
   // Attach X-Data-Source header to every API response
   const dataSource = config.DATA_SOURCE || 'demo';
   app.use('/api', (req, res, next) => {
@@ -64,6 +73,7 @@ export function createApp({ repository, config = {} } = {}) {
   app.use('/api/metrics', createMetricsRouter(metricsService));
   app.use('/api/insights', createInsightsRouter(insightsService));
   app.use('/api/copilot', createCopilotRouter(copilotService, insightsService));
+  app.use('/api/woocommerce', createWooCommerceRouter(activeWcClient));
 
   // Catch-all 404 for unknown routes
   app.use(notFound);

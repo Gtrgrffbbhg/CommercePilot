@@ -93,3 +93,23 @@ export function getInsights({ from, to, severity } = {}, signal) {
   return apiClient(`/api/insights${query ? `?${query}` : ''}`, { signal });
 }
 
+export function getWooCommerceHealth(signal) {
+  return apiClient('/api/woocommerce/health', { signal });
+}
+
+export function getWooCommerceProducts({ page = 1, perPage = 20 } = {}, signal) {
+  const params = new URLSearchParams({ page: String(page), per_page: String(perPage) });
+  return apiClient(`/api/woocommerce/products?${params.toString()}`, { signal });
+}
+
+export function getWooCommerceOrders({ page = 1, perPage = 20 } = {}, signal) {
+  const params = new URLSearchParams({ page: String(page), per_page: String(perPage) });
+  return apiClient(`/api/woocommerce/orders?${params.toString()}`, { signal });
+}
+
+export function getWooCommerceCustomers({ page = 1, perPage = 20 } = {}, signal) {
+  const params = new URLSearchParams({ page: String(page), per_page: String(perPage) });
+  return apiClient(`/api/woocommerce/customers?${params.toString()}`, { signal });
+}
+
+
