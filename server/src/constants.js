@@ -14,6 +14,7 @@ export const REVENUE_STATUSES = ['processing', 'completed'];
 
 // Allowed sort fields for customer listings to prevent unauthorized or inefficient database queries
 export const CUSTOMER_SORT_FIELDS = [
+  'name',
   'totalSpent',
   'orderCount',
   'lastOrderAt',

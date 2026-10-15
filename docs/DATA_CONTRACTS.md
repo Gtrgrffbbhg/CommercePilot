@@ -55,6 +55,25 @@ All dates are serialized as ISO-8601 UTC strings (e.g., `2026-10-15T00:00:00.000
 | `refundedTotal` | `number` | Lifetime value of refunded orders |
 | `rfm` | `null` | Reserved for Milestone 5 RFM segmentation engine |
 
+### 2.1 Customer Directory List & Summary (`GET /api/customers`)
+Query parameters:
+- `page`: Page index (default `1`, integer $\ge 1$)
+- `pageSize`: Items per page (default `20`, integer $1-100$)
+- `sortBy`: Field to sort by (`'totalSpent' | 'orderCount' | 'createdAt' | 'lastOrderAt' | 'name'`, default `'totalSpent'`)
+- `sortDir`: Sort direction (`'asc' | 'desc'`, default `'desc'`)
+- `search`: Optional search query matching case-insensitively against `firstName`, `lastName`, or `email`
+- `status`: Optional lifecycle filter (`'all' | 'returning' | 'one_time' | 'zero_orders' | 'guest' | 'registered'`, default `'all'`)
+
+Response object:
+- `data`: Array of `Customer` objects matching the filters and pagination.
+- `pagination`: `{ page, pageSize, total, totalPages }`
+- `summary`: Directory-wide aggregate metrics calculated across the entire customer base:
+  - `totalCustomers`: Count of all customers in database (500 in demo dataset).
+  - `repeatCustomers`: Count of customers with $\ge 2$ revenue orders.
+  - `oneTimeCustomers`: Count of customers with exactly 1 revenue order.
+  - `totalRevenue`: Sum of `totalSpent` across all customers.
+  - `averageCustomerSpend`: Average spend per customer across the full base.
+
 ---
 
 ## 3. Order Contract (`Order`)

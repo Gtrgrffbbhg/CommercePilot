@@ -40,6 +40,18 @@ export function Header({ meta, health, healthError }) {
             Dashboard
           </NavLink>
           <NavLink
+            to="/customers"
+            className={({ isActive }) =>
+              `px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+                isActive
+                  ? 'bg-slate-800 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+              }`
+            }
+          >
+            Customers
+          </NavLink>
+          <NavLink
             to="/foundation-check"
             className={({ isActive }) =>
               `px-3 py-1 text-xs font-medium rounded-md transition-colors ${

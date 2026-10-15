@@ -65,6 +65,74 @@ describe('Server API Endpoints', () => {
       expect(res.body.error.code).toBe('VALIDATION_ERROR');
     });
 
+    it('returns summary metrics and data for customer directory', async () => {
+      const res = await request(app).get('/api/customers?page=1&pageSize=10');
+      expect(res.status).toBe(200);
+      expect(res.body.summary).toBeDefined();
+      expect(res.body.summary.totalCustomers).toBe(500);
+      expect(res.body.summary.repeatCustomers).toBeGreaterThan(0);
+      expect(res.body.summary.oneTimeCustomers).toBeGreaterThan(0);
+      expect(res.body.summary.totalRevenue).toBeGreaterThan(0);
+      expect(res.body.summary.averageCustomerSpend).toBeGreaterThan(0);
+    });
+
+    it('filters customers by search term matching name or email', async () => {
+      const allRes = await request(app).get('/api/customers?pageSize=1');
+      const targetCustomer = allRes.body.data[0];
+      const searchTerm = targetCustomer.lastName.toLowerCase();
+
+      const searchRes = await request(app).get(`/api/customers?search=${searchTerm}`);
+      expect(searchRes.status).toBe(200);
+      expect(searchRes.body.data.length).toBeGreaterThan(0);
+      for (const c of searchRes.body.data) {
+        const matchesName = (c.firstName + ' ' + c.lastName).toLowerCase().includes(searchTerm);
+        const matchesEmail = c.email.toLowerCase().includes(searchTerm);
+        expect(matchesName || matchesEmail).toBe(true);
+      }
+    });
+
+    it('filters customers by relationship status (returning vs one_time vs guest)', async () => {
+      const returningRes = await request(app).get('/api/customers?status=returning');
+      expect(returningRes.status).toBe(200);
+      for (const c of returningRes.body.data) {
+        expect(c.orderCount).toBeGreaterThan(1);
+      }
+
+      const oneTimeRes = await request(app).get('/api/customers?status=one_time');
+      expect(oneTimeRes.status).toBe(200);
+      for (const c of oneTimeRes.body.data) {
+        expect(c.orderCount).toBe(1);
+      }
+
+      const guestRes = await request(app).get('/api/customers?status=guest');
+      expect(guestRes.status).toBe(200);
+      for (const c of guestRes.body.data) {
+        expect(c.isGuest).toBe(true);
+      }
+    });
+
+    it('supports sorting by customer name (alphabetical)', async () => {
+      const resAsc = await request(app).get('/api/customers?sortBy=name&sortDir=asc&pageSize=5');
+      expect(resAsc.status).toBe(200);
+      const names = resAsc.body.data.map((c) => `${c.firstName} ${c.lastName}`.toLowerCase());
+      for (let i = 0; i < names.length - 1; i++) {
+        expect(names[i].localeCompare(names[i + 1])).toBeLessThanOrEqual(0);
+      }
+    });
+
+    it('returns empty data array when search matches zero customers', async () => {
+      const res = await request(app).get('/api/customers?search=xyz_completely_unmatched_query_123');
+      expect(res.status).toBe(200);
+      expect(res.body.data).toEqual([]);
+      expect(res.body.pagination.total).toBe(0);
+    });
+
+    it('rejects invalid status filter with HTTP 400', async () => {
+      const res = await request(app).get('/api/customers?status=invalid_status_enum');
+      expect(res.status).toBe(400);
+      expect(res.body.error.code).toBe('VALIDATION_ERROR');
+    });
+
     it('returns customer details plus their 10 most recent orders for valid ID', async () => {
       // First get a valid customer id
       const listRes = await request(app).get('/api/customers?pageSize=1');

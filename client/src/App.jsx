@@ -2,6 +2,8 @@ import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { DashboardPage } from './pages/DashboardPage.jsx';
 import { FoundationCheck } from './pages/FoundationCheck.jsx';
+import { CustomersPage } from './pages/CustomersPage.jsx';
+import { CustomerDetailPage } from './pages/CustomerDetailPage.jsx';
 import { AppShell } from './components/layout/AppShell.jsx';
 
 // 404 catch-all: not yet full shell but shows friendly message
@@ -27,6 +29,8 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<DashboardPage />} />
+        <Route path="/customers" element={<CustomersPage />} />
+        <Route path="/customers/:id" element={<CustomerDetailPage />} />
         <Route path="/foundation-check" element={<FoundationCheck />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

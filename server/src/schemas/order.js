@@ -48,6 +48,8 @@ export const orderQuerySchema = z
     page: z.coerce.number().int().min(1).default(1),
     pageSize: z.coerce.number().int().min(1).max(MAX_PAGE_SIZE).default(DEFAULT_PAGE_SIZE),
     status: z.enum(ORDER_STATUSES).optional(),
+    customerId: z.string().optional(),
+    customerEmail: z.string().optional(),
     from: z.string().datetime().optional(),
     to: z.string().datetime().optional(),
   })

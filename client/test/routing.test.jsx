@@ -11,6 +11,14 @@ vi.mock('../src/pages/DashboardPage.jsx', () => ({
   DashboardPage: () => <div data-testid="dashboard-page">Dashboard</div>,
 }));
 
+vi.mock('../src/pages/CustomersPage.jsx', () => ({
+  CustomersPage: () => <div data-testid="customers-page">Customers Directory</div>,
+}));
+
+vi.mock('../src/pages/CustomerDetailPage.jsx', () => ({
+  CustomerDetailPage: () => <div data-testid="customer-detail-page">Customer Detail</div>,
+}));
+
 vi.mock('../src/pages/FoundationCheck.jsx', () => ({
   FoundationCheck: () => <div data-testid="foundation-check-page">Foundation Check</div>,
 }));
@@ -22,6 +30,8 @@ vi.mock('../src/components/layout/AppShell.jsx', () => ({
 
 // Import page stubs after mocks are declared
 import { DashboardPage } from '../src/pages/DashboardPage.jsx';
+import { CustomersPage } from '../src/pages/CustomersPage.jsx';
+import { CustomerDetailPage } from '../src/pages/CustomerDetailPage.jsx';
 import { FoundationCheck } from '../src/pages/FoundationCheck.jsx';
 import { AppShell } from '../src/components/layout/AppShell.jsx';
 
@@ -31,6 +41,8 @@ function renderAtPath(path) {
     <MemoryRouter initialEntries={[path]}>
       <Routes>
         <Route path="/" element={<DashboardPage />} />
+        <Route path="/customers" element={<CustomersPage />} />
+        <Route path="/customers/:id" element={<CustomerDetailPage />} />
         <Route path="/foundation-check" element={<FoundationCheck />} />
         <Route
           path="*"
@@ -51,6 +63,16 @@ describe('App routing', () => {
     expect(screen.getByTestId('dashboard-page')).toBeTruthy();
   });
 
+  it('renders CustomersPage at "/customers"', () => {
+    renderAtPath('/customers');
+    expect(screen.getByTestId('customers-page')).toBeTruthy();
+  });
+
+  it('renders CustomerDetailPage at "/customers/:id"', () => {
+    renderAtPath('/customers/cus_00001');
+    expect(screen.getByTestId('customer-detail-page')).toBeTruthy();
+  });
+
   it('renders FoundationCheck at "/foundation-check"', () => {
     renderAtPath('/foundation-check');
     expect(screen.getByTestId('foundation-check-page')).toBeTruthy();
@@ -61,13 +83,9 @@ describe('App routing', () => {
     expect(screen.getByTestId('not-found')).toBeTruthy();
   });
 
-  it('does NOT render DashboardPage at "/foundation-check"', () => {
-    renderAtPath('/foundation-check');
+  it('does NOT render DashboardPage at "/customers"', () => {
+    renderAtPath('/customers');
     expect(screen.queryByTestId('dashboard-page')).toBeNull();
   });
-
-  it('does NOT render FoundationCheck at "/"', () => {
-    renderAtPath('/');
-    expect(screen.queryByTestId('foundation-check-page')).toBeNull();
-  });
 });
+

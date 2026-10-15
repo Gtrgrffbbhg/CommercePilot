@@ -53,3 +53,30 @@ export function getTopCustomers({ pageSize = 5, sortBy = 'totalSpent', sortDir =
   });
   return apiClient(`/api/customers?${params.toString()}`, { signal });
 }
+
+export function getCustomers({ page = 1, pageSize = 20, sortBy = 'totalSpent', sortDir = 'desc', search = '', status = 'all' } = {}, signal) {
+  const params = new URLSearchParams();
+  params.set('page', String(page));
+  params.set('pageSize', String(pageSize));
+  if (sortBy) params.set('sortBy', sortBy);
+  if (sortDir) params.set('sortDir', sortDir);
+  if (search && search.trim()) params.set('search', search.trim());
+  if (status && status !== 'all') params.set('status', status);
+
+  return apiClient(`/api/customers?${params.toString()}`, { signal });
+}
+
+export function getCustomerById(id, signal) {
+  return apiClient(`/api/customers/${encodeURIComponent(id)}`, { signal });
+}
+
+export function getOrdersByCustomer({ customerId, page = 1, pageSize = 20, status } = {}, signal) {
+  const params = new URLSearchParams();
+  params.set('customerId', customerId);
+  params.set('page', String(page));
+  params.set('pageSize', String(pageSize));
+  if (status) params.set('status', status);
+
+  return apiClient(`/api/orders?${params.toString()}`, { signal });
+}
+

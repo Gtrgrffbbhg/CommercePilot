@@ -22,6 +22,28 @@ export const customerSchema = z.object({
   rfm: z.null(), // Reserved for Milestone 5 RFM segmentation
 });
 
+export const customerQuerySchema = z.object({
+  page: z.coerce.number().int().min(1, 'Page must be at least 1').default(1),
+  pageSize: z.coerce
+    .number()
+    .int()
+    .min(1, 'Page size must be at least 1')
+    .max(100, 'Page size cannot exceed 100')
+    .default(20),
+  sortBy: z.enum(['name', 'totalSpent', 'orderCount', 'lastOrderAt', 'createdAt']).default('totalSpent'),
+  sortDir: z.enum(['asc', 'desc']).default('desc'),
+  search: z.string().trim().optional(),
+  status: z.enum(['all', 'returning', 'one_time', 'zero_orders', 'guest', 'registered']).default('all'),
+});
+
+export const customerSummarySchema = z.object({
+  totalCustomers: z.number().int().nonnegative(),
+  repeatCustomers: z.number().int().nonnegative(),
+  oneTimeCustomers: z.number().int().nonnegative(),
+  totalRevenue: z.number().nonnegative(),
+  averageCustomerSpend: z.number().nonnegative(),
+});
+
 export const customerListResponseSchema = z.object({
   data: z.array(customerSchema),
   pagination: z.object({
@@ -30,4 +52,6 @@ export const customerListResponseSchema = z.object({
     total: z.number().int(),
     totalPages: z.number().int(),
   }),
+  summary: customerSummarySchema.optional(),
 });
+

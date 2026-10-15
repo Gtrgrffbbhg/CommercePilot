@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { validate } from '../middleware/validate.js';
-import { paginationQuerySchema } from '../schemas/common.js';
+import { customerQuerySchema } from '../schemas/customer.js';
 
 export function createCustomersRouter(customerService) {
   const router = Router();
@@ -10,7 +10,7 @@ export function createCustomersRouter(customerService) {
     id: z.string().min(1, 'Customer ID is required'),
   });
 
-  router.get('/', validate({ query: paginationQuerySchema }), async (req, res, next) => {
+  router.get('/', validate({ query: customerQuerySchema }), async (req, res, next) => {
     try {
       const result = await customerService.listCustomers(req.query);
       res.json(result);

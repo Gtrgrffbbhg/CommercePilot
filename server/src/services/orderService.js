@@ -2,8 +2,8 @@ import { AppError } from '../utils/AppError.js';
 
 export function createOrderService(repository) {
   return {
-    async listOrders({ page = 1, pageSize = 20, status, from, to } = {}) {
-      const { data, total } = await repository.listOrders({ page, pageSize, status, from, to });
+    async listOrders({ page = 1, pageSize = 20, status, from, to, customerId, customerEmail } = {}) {
+      const { data, total } = await repository.listOrders({ page, pageSize, status, from, to, customerId, customerEmail });
       const totalPages = Math.ceil(total / pageSize) || 1;
 
       return {

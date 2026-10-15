@@ -14,14 +14,47 @@ export function createDemoRepository({ seed = 42, now = new Date() } = {}) {
       return meta;
     },
 
-    async listCustomers({ page = 1, pageSize = 20, sortBy = 'totalSpent', sortDir = 'desc' } = {}) {
-      const sorted = [...customers].sort((a, b) => {
-        let valA = a[sortBy];
-        let valB = b[sortBy];
+    async listCustomers({ page = 1, pageSize = 20, sortBy = 'totalSpent', sortDir = 'desc', search, status = 'all' } = {}) {
+      let filtered = customers;
 
-        if (sortBy === 'lastOrderAt' || sortBy === 'createdAt') {
-          valA = valA ? new Date(valA).getTime() : 0;
-          valB = valB ? new Date(valB).getTime() : 0;
+      // Filter by search query (firstName, lastName, or email)
+      if (search && search.trim()) {
+        const query = search.trim().toLowerCase();
+        filtered = filtered.filter((c) => {
+          const fullName = `${c.firstName} ${c.lastName}`.toLowerCase();
+          const email = (c.email || '').toLowerCase();
+          return fullName.includes(query) || email.includes(query);
+        });
+      }
+
+      // Filter by customer relationship status
+      if (status && status !== 'all') {
+        if (status === 'returning') {
+          filtered = filtered.filter((c) => c.orderCount > 1);
+        } else if (status === 'one_time') {
+          filtered = filtered.filter((c) => c.orderCount === 1);
+        } else if (status === 'zero_orders') {
+          filtered = filtered.filter((c) => c.orderCount === 0);
+        } else if (status === 'guest') {
+          filtered = filtered.filter((c) => c.isGuest === true);
+        } else if (status === 'registered') {
+          filtered = filtered.filter((c) => c.isGuest === false);
+        }
+      }
+
+      const sorted = [...filtered].sort((a, b) => {
+        let valA;
+        let valB;
+
+        if (sortBy === 'name') {
+          valA = `${a.firstName} ${a.lastName}`.toLowerCase();
+          valB = `${b.firstName} ${b.lastName}`.toLowerCase();
+        } else if (sortBy === 'lastOrderAt' || sortBy === 'createdAt') {
+          valA = a[sortBy] ? new Date(a[sortBy]).getTime() : 0;
+          valB = b[sortBy] ? new Date(b[sortBy]).getTime() : 0;
+        } else {
+          valA = a[sortBy] ?? 0;
+          valB = b[sortBy] ?? 0;
         }
 
         if (valA < valB) return sortDir === 'asc' ? -1 : 1;
@@ -43,11 +76,16 @@ export function createDemoRepository({ seed = 42, now = new Date() } = {}) {
       return customerMap.get(id) || null;
     },
 
-    async listOrders({ page = 1, pageSize = 20, status, from, to, customerId } = {}) {
+    async listOrders({ page = 1, pageSize = 20, status, from, to, customerId, customerEmail } = {}) {
       let filtered = orders;
 
       if (customerId) {
         filtered = filtered.filter((o) => o.customerId === customerId);
+      }
+
+      if (customerEmail) {
+        const emailLower = customerEmail.trim().toLowerCase();
+        filtered = filtered.filter((o) => (o.customerEmail || '').toLowerCase() === emailLower);
       }
 
       if (status) {
