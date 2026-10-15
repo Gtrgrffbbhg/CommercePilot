@@ -7,6 +7,7 @@
 ---
 
 > [!IMPORTANT]
+> although woocommerce is successfully integreted!....demo data is used as bulk data to show other performance based features
 > **DEMO DATA NOTICE:** This project currently runs in **Demo Mode** using a deterministic, simulated eCommerce dataset. All customers, emails, order histories, and financial figures are completely synthetic.
 
 
