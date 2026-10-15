@@ -158,6 +158,11 @@ curl "http://localhost:4000/api/insights"
 
 # 8. Retrieve filtered insights by severity (e.g. warning, critical, opportunity)
 curl "http://localhost:4000/api/insights?severity=warning"
+
+# 9. Ask CommercePilot Copilot a natural language business question
+curl -X POST "http://localhost:4000/api/copilot/chat" \
+  -H "Content-Type: application/json" \
+  -d '{"message": "How is revenue performing?"}'
 ```
 
 ---
@@ -212,42 +217,69 @@ For each evaluated profile, the engine generates an explainable action plan:
 
 ---
 
-## 9. Testing
+## 9. CommercePilot Copilot (Rule-Based Business Assistant)
+
+CommercePilot provides an interactive **Business Copilot** (`POST /api/copilot/chat`) accessible at `/copilot` in the web application.
+
+### Transparency & AI Boundary
+- **Rule-Based Assistant:** This assistant operates deterministically using keyword and pattern matching routing into the existing data and analytics services (`metricsService`, `insightsService`, `intelligenceService`, and repository methods).
+- **Zero Hallucination Guarantee:** It does **not** invoke an external probabilistic Large Language Model (LLM), API keys, or paid services. Answers are 100% grounded in verified order and customer records.
+- **Data Source Citations:** Every response explicitly lists the data sources and analysis services used to produce the answer, with deep links to the corresponding views in the application.
+
+### Supported Question Domains
+| Question Domain | Example User Question | Underlying Data Service / Pipeline |
+| :--- | :--- | :--- |
+| **Revenue Performance** | *"How is revenue performing?"* | `metricsService.computeKpis` & period-over-period delta calculation |
+| **Churn Risk** | *"Which customers are at risk of churning?"* | `intelligenceService` RFM segmentation ($R > 90\text{d}$, $F \ge 2$) |
+| **Top Customers** | *"Who are our top customers?"* | `customerService` / `repository.getAllCustomers` sorted by lifetime spend |
+| **Retention Levers** | *"What actions should we take to improve retention?"* | Repeat-buyer cohort ratios, 2nd-order bounceback targets |
+| **Business Problems** | *"What are our most important business problems?"* | `insightsService` critical & warning alert filtering |
+| **Customer Segments** | *"Which customer segments should we focus on?"* | Full RFM cohort distribution across 6 distinct customer segments |
+| **Catalog & AOV** | *"Which product categories are driving sales?"* | Line item category sales aggregation and AOV metrics |
+| **Store Health & Insights** | *"What is our overall store health score?"* | `insightsService` 0–100 store health index and dimension overview |
+| **Unsupported Inquiries** | *"What is the weather today?"* | Graceful unsupported disclosure with suggestions for valid business questions |
+
+---
+
+## 10. Testing
 
 CommercePilot maintains 100% passing automated tests across server and client:
 
 ```powershell
-# Run all server and client test suites (116 tests total)
+# Run all server and client test suites (142 tests total)
 npm test
 
-# Run only server tests (41 tests: API, generator, intelligence, and insights)
+# Run only server tests (59 tests: API, generator, intelligence, insights, and copilot)
 npm test --prefix server
 
-# Run only client tests (75 tests: formatting, routing, cards, directory, details, intelligence, and insights)
+# Run only client tests (83 tests: formatting, routing, cards, directory, details, intelligence, insights, and copilot)
 npm test --prefix client
 ```
 
 ---
 
-## 10. Where to Start Reading the Code
+## 11. Where to Start Reading the Code
 
 Follow this recommended study order to understand the codebase file-by-file:
 
 1. [AGENTS.md](file:///c:/Users/Kumar%20patil/Desktop/kilowott/AGENTS.md) — The persistent operating rules governing all code in this repository.
 2. [docs/ARCHITECTURE.md](file:///c:/Users/Kumar%20patil/Desktop/kilowott/docs/ARCHITECTURE.md) — High-level mental model and end-to-end request lifecycle.
-3. [docs/DATA_CONTRACTS.md](file:///c:/Users/Kumar%20patil/Desktop/kilowott/docs/DATA_CONTRACTS.md) — The single source of truth for Customer, Order, Metrics, and Insights schemas.
-4. [server/src/constants.js](file:///c:/Users/Kumar%20patil/Desktop/kilowott/server/src/constants.js) — Lifecycle statuses, revenue definitions, and pagination boundaries.
-5. [server/src/services/insightsService.js](file:///c:/Users/Kumar%20patil/Desktop/kilowott/server/src/services/insightsService.js) — Deterministic store health score and 5-dimension insights engine.
-6. [server/src/services/intelligenceService.js](file:///c:/Users/Kumar%20patil/Desktop/kilowott/server/src/services/intelligenceService.js) — Deterministic RFM segmentation, churn risk scoring, and tailored retention outreach draft generator.
-7. [client/src/pages/InsightsPage.jsx](file:///c:/Users/Kumar%20patil/Desktop/kilowott/client/src/pages/InsightsPage.jsx) — Store health score dial, severity filter tabs, insight cards, and action playbooks.
-8. [client/src/pages/CustomersPage.jsx](file:///c:/Users/Kumar%20patil/Desktop/kilowott/client/src/pages/CustomersPage.jsx) — Customer directory with search, filter tabs, sorting, and summary metrics.
-9. [client/src/pages/CustomerDetailPage.jsx](file:///c:/Users/Kumar%20patil/Desktop/kilowott/client/src/pages/CustomerDetailPage.jsx) — Customer profile, Customer Retention Intelligence Card, copy action, and order history table.
+3. [docs/DATA_CONTRACTS.md](file:///c:/Users/Kumar%20patil/Desktop/kilowott/docs/DATA_CONTRACTS.md) — The single source of truth for Customer, Order, Metrics, Insights, and Copilot schemas.
+4. [server/src/services/copilotService.js](file:///c:/Users/Kumar%20patil/Desktop/kilowott/server/src/services/copilotService.js) — Safe question classifier and evidence-based orchestration layer.
+5. [server/src/routes/copilot.js](file:///c:/Users/Kumar%20patil/Desktop/kilowott/server/src/routes/copilot.js) — Validated POST `/api/copilot/chat` endpoint.
+6. [client/src/pages/CopilotPage.jsx](file:///c:/Users/Kumar%20patil/Desktop/kilowott/client/src/pages/CopilotPage.jsx) — Conversational Copilot UI with citations, metric cards, suggested follow-ups, and empty/error states.
+7. [server/src/services/insightsService.js](file:///c:/Users/Kumar%20patil/Desktop/kilowott/server/src/services/insightsService.js) — Deterministic store health score and 5-dimension insights engine.
+8. [server/src/services/intelligenceService.js](file:///c:/Users/Kumar%20patil/Desktop/kilowott/server/src/services/intelligenceService.js) — Deterministic RFM segmentation, churn risk scoring, and tailored retention outreach draft generator.
+9. [client/src/pages/InsightsPage.jsx](file:///c:/Users/Kumar%20patil/Desktop/kilowott/client/src/pages/InsightsPage.jsx) — Store health score dial, severity filter tabs, insight cards, and action playbooks.
+10. [client/src/pages/CustomersPage.jsx](file:///c:/Users/Kumar%20patil/Desktop/kilowott/client/src/pages/CustomersPage.jsx) — Customer directory with search, filter tabs, sorting, and summary metrics.
+11. [client/src/pages/CustomerDetailPage.jsx](file:///c:/Users/Kumar%20patil/Desktop/kilowott/client/src/pages/CustomerDetailPage.jsx) — Customer profile, Customer Retention Intelligence Card, copy action, and order history table.
 
 ---
 
-## 11. Known Limitations
+## 12. Known Limitations
 
 - **Authentication:** User authentication and role-based access control are not yet implemented. Do not expose this instance to an untrusted public network.
 - **Storage:** Data is currently served from deterministic in-memory demo simulation. MongoDB persistence is scheduled for future milestones.
 - **WooCommerce Live Sync:** WooCommerce REST API integration is planned for future milestones; no live WordPress connection is currently active.
 - **Outreach Automation:** The Customer Retention Intelligence feature produces structured drafts and recommendations; it does not connect to an SMTP server or auto-send promotional communications.
+- **Copilot Model:** The Copilot operates as a deterministic, rule-based orchestrator grounded in store data. It does not invoke an external generative LLM or arbitrary text model.

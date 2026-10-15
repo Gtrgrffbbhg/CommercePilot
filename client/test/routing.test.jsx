@@ -23,6 +23,10 @@ vi.mock('../src/pages/InsightsPage.jsx', () => ({
   InsightsPage: () => <div data-testid="insights-page">Insights Page</div>,
 }));
 
+vi.mock('../src/pages/CopilotPage.jsx', () => ({
+  CopilotPage: () => <div data-testid="copilot-page">Copilot Page</div>,
+}));
+
 vi.mock('../src/pages/FoundationCheck.jsx', () => ({
   FoundationCheck: () => <div data-testid="foundation-check-page">Foundation Check</div>,
 }));
@@ -37,6 +41,7 @@ import { DashboardPage } from '../src/pages/DashboardPage.jsx';
 import { CustomersPage } from '../src/pages/CustomersPage.jsx';
 import { CustomerDetailPage } from '../src/pages/CustomerDetailPage.jsx';
 import { InsightsPage } from '../src/pages/InsightsPage.jsx';
+import { CopilotPage } from '../src/pages/CopilotPage.jsx';
 import { FoundationCheck } from '../src/pages/FoundationCheck.jsx';
 import { AppShell } from '../src/components/layout/AppShell.jsx';
 
@@ -47,6 +52,7 @@ function renderAtPath(path) {
       <Routes>
         <Route path="/" element={<DashboardPage />} />
         <Route path="/insights" element={<InsightsPage />} />
+        <Route path="/copilot" element={<CopilotPage />} />
         <Route path="/customers" element={<CustomersPage />} />
         <Route path="/customers/:id" element={<CustomerDetailPage />} />
         <Route path="/foundation-check" element={<FoundationCheck />} />
@@ -77,6 +83,11 @@ describe('App routing', () => {
   it('renders InsightsPage at "/insights"', () => {
     renderAtPath('/insights');
     expect(screen.getByTestId('insights-page')).toBeTruthy();
+  });
+
+  it('renders CopilotPage at "/copilot"', () => {
+    renderAtPath('/copilot');
+    expect(screen.getByTestId('copilot-page')).toBeTruthy();
   });
 
   it('renders CustomerDetailPage at "/customers/:id"', () => {

@@ -193,6 +193,40 @@ interface InsightsResponse {
 
 ---
 
+## 6. Business Copilot Contract (`POST /api/copilot/chat`)
+
+Request Body:
+```typescript
+interface CopilotChatRequest {
+  message: string; // Trimmed string between 1 and 500 characters
+}
+```
+
+Response Schema:
+```typescript
+interface CopilotChatResponse {
+  question: string;
+  intent: 'revenue' | 'churn_risk' | 'top_customers' | 'retention' | 'business_problems' | 'customer_segments' | 'insights' | 'catalog' | 'unsupported';
+  answer: string;
+  narrative: string;
+  metrics: Array<{
+    label: string;
+    value: string | number;
+    context?: string;
+  }>;
+  citations: Array<{
+    source: string;
+    label: string;
+    href?: string;
+  }>;
+  suggestedFollowUps: string[];
+  answeredAt: string; // ISO 8601 UTC
+  mode: 'rule-based';
+}
+```
+
+---
+
 ## Planned WooCommerce mapping (NOT YET VERIFIED against a real API)
 
 > [!WARNING]

@@ -52,6 +52,19 @@ export function Header({ meta, health, healthError }) {
             Insights
           </NavLink>
           <NavLink
+            to="/copilot"
+            className={({ isActive }) =>
+              `px-3 py-1 text-xs font-medium rounded-md transition-colors flex items-center gap-1 ${
+                isActive
+                  ? 'bg-indigo-700 text-white shadow-sm shadow-indigo-700/30'
+                  : 'text-indigo-300 hover:text-indigo-100 hover:bg-indigo-950/60'
+              }`
+            }
+          >
+            <span>✦</span>
+            <span>Copilot</span>
+          </NavLink>
+          <NavLink
             to="/customers"
             className={({ isActive }) =>
               `px-3 py-1 text-xs font-medium rounded-md transition-colors ${
