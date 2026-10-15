@@ -98,3 +98,46 @@ interface ICrmRepository {
 2. **Server-Side Proxy Security:** The frontend never connects directly to WooCommerce. WooCommerce credentials reside exclusively in server `.env` files.
 3. **Integer Cents Precision:** Floating-point numbers are converted to integer cents before addition or subtraction to eliminate precision errors.
 4. **Abort Safety:** All frontend fetch requests are wrapped in an `AbortController` to guarantee clean unmounting.
+
+---
+
+## 6. Client Architecture & Component Hierarchy (Prompt 2)
+
+```
+App (BrowserRouter)
+├── Route "/" -> DashboardPage
+│   └── AppShell
+│       ├── Header (Live Server Status, NavLinks, DemoBadge)
+│       └── main#main-content
+│           ├── DemoBanner (Conditional on meta.isDemo)
+│           ├── DateRangePicker (Presets: 7d/30d/90d/365d, Custom From/To, Compare Toggle)
+│           ├── KpiGrid (7 KPI Cards: Revenue, Orders, AOV, Active Buyers, New Buyers, Returning Rate, Refund Rate)
+│           ├── Grid Row 1 (Charts)
+│           │   ├── RevenueTrendChart (Recharts AreaChart + Compare Overlay + Table toggle)
+│           │   └── OrdersChart (Recharts BarChart + Compare Overlay + Table toggle)
+│           ├── Grid Row 2 (Breakdowns)
+│           │   ├── OrderStatusChart (7-status distribution bar + breakdown metrics + Table toggle)
+│           │   └── CategorySalesChart (Horizontal BarChart of category item sales + Table toggle)
+│           ├── Grid Row 3 (Customer Insights)
+│           │   ├── NewCustomersChart (LineChart of customer acquisition + Table toggle)
+│           │   └── CustomerMixCard (Active buyers, first-time buyers, repeat purchase rate)
+│           └── Grid Row 4 (Tables)
+│               ├── TopCustomersTable (All-time top spenders from /api/customers)
+│               └── RecentOrdersTable (8 most recent orders in active range from /api/orders)
+├── Route "/foundation-check" -> FoundationCheck (Prompt 1 proof page preserved)
+└── Route "*" -> NotFound (404 catch-all with link back to dashboard)
+```
+
+---
+
+## 7. Dashboard Data Flow & State Management
+
+1. **URL as Single Source of Truth for Filters:**
+   The `useDateRange` hook synchronizes date range filters directly with URL query parameters (`?range=30d` or `?from=...&to=...` and optional `&compare=true`). Refreshing or sharing the URL preserves the exact dashboard view state.
+2. **Coordinated Section Data Fetching:**
+   The `useDashboardData` hook orchestrates independent queries for each dashboard section using `useSectionQuery`. If any section fails, its isolated error state with a "Retry" button renders without breaking adjacent dashboard widgets.
+3. **Automatic Request Cancellation:**
+   Whenever the date range or comparison toggle changes, previous in-flight HTTP requests are automatically aborted via `AbortController`, preventing race conditions and stale response overwrites.
+4. **Accessible Alternative Views:**
+   Every visualization (`ChartCard`) provides an accessible alternative table view (`View as table`), accessible labels (`aria-label`), and respects `prefers-reduced-motion` settings.
+

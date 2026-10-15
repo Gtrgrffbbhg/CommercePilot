@@ -1,5 +1,5 @@
-import { REVENUE_STATUSES, DEFAULT_CURRENCY } from '../constants.js';
-import { sumMoney, roundMoney } from '../utils/money.js';
+import { ORDER_STATUSES, REVENUE_STATUSES, DEFAULT_CURRENCY } from '../constants.js';
+import { toCents, fromCents, sumMoney, roundMoney } from '../utils/money.js';
 import {
   toIsoUtc,
   startOfUtcDay,
@@ -11,6 +11,14 @@ import {
   getPreviousPeriod,
   generateBuckets,
 } from '../utils/dates.js';
+
+// Shared range resolver providing consistent default (last 30 days) and UTC semantics across summary, timeseries and breakdown
+export function resolveEffectiveRange(metaGeneratedAt, from, to) {
+  const now = new Date(metaGeneratedAt);
+  const effectiveTo = to ? toIsoUtc(to) : now.toISOString();
+  const effectiveFrom = from ? toIsoUtc(from) : addDaysUtc(new Date(effectiveTo), -30).toISOString();
+  return { effectiveFrom, effectiveTo };
+}
 
 export function createMetricsService(repository) {
   function computeKpis(orders, allCustomers, from, to) {
@@ -84,11 +92,7 @@ export function createMetricsService(repository) {
   return {
     async getSummary({ from, to } = {}) {
       const meta = await repository.getMeta();
-      const now = new Date(meta.generatedAt);
-
-      // Default range is the last 30 days ending at now
-      const effectiveTo = to ? toIsoUtc(to) : now.toISOString();
-      const effectiveFrom = from ? toIsoUtc(from) : addDaysUtc(new Date(effectiveTo), -30).toISOString();
+      const { effectiveFrom, effectiveTo } = resolveEffectiveRange(meta.generatedAt, from, to);
 
       const { from: prevFrom, to: prevTo } = getPreviousPeriod(effectiveFrom, effectiveTo);
 
@@ -114,10 +118,7 @@ export function createMetricsService(repository) {
 
     async getTimeseries({ from, to, interval = 'day' } = {}) {
       const meta = await repository.getMeta();
-      const now = new Date(meta.generatedAt);
-
-      const effectiveTo = to ? toIsoUtc(to) : now.toISOString();
-      const effectiveFrom = from ? toIsoUtc(from) : addDaysUtc(new Date(effectiveTo), -30).toISOString();
+      const { effectiveFrom, effectiveTo } = resolveEffectiveRange(meta.generatedAt, from, to);
 
       const orders = await repository.getOrdersInRange(effectiveFrom, effectiveTo);
       const allCustomers = await repository.getAllCustomers();
@@ -187,6 +188,60 @@ export function createMetricsService(repository) {
       return {
         interval,
         points,
+      };
+    },
+
+    async getOrderBreakdown({ from, to } = {}) {
+      const meta = await repository.getMeta();
+      const { effectiveFrom, effectiveTo } = resolveEffectiveRange(meta.generatedAt, from, to);
+
+      const orders = await repository.getOrdersInRange(effectiveFrom, effectiveTo);
+
+      // All 7 statuses in strict ORDER_STATUSES sequence, zero-filled for all orders in range
+      const byStatus = ORDER_STATUSES.map((status) => {
+        const matchingOrders = orders.filter((o) => o.status === status);
+        return {
+          status,
+          orders: matchingOrders.length,
+          total: sumMoney(...matchingOrders.map((o) => o.total)),
+        };
+      });
+
+      // Group line items by category for REVENUE_STATUSES orders only
+      const revenueOrders = orders.filter((o) => REVENUE_STATUSES.includes(o.status));
+      const categoryMap = new Map();
+
+      for (const order of revenueOrders) {
+        for (const item of order.lineItems) {
+          const entry = categoryMap.get(item.category) || { units: 0, itemSalesCents: 0 };
+          entry.units += item.quantity;
+          entry.itemSalesCents += toCents(item.total);
+          categoryMap.set(item.category, entry);
+        }
+      }
+
+      const byCategory = Array.from(categoryMap.entries()).map(([category, { units, itemSalesCents }]) => ({
+        category,
+        units,
+        itemSales: fromCents(itemSalesCents),
+      }));
+
+      // Sort by itemSales descending, then category ascending
+      byCategory.sort((a, b) => {
+        if (b.itemSales !== a.itemSales) {
+          return b.itemSales - a.itemSales;
+        }
+        return a.category.localeCompare(b.category);
+      });
+
+      return {
+        range: {
+          from: effectiveFrom,
+          to: effectiveTo,
+        },
+        currency: DEFAULT_CURRENCY,
+        byStatus,
+        byCategory,
       };
     },
   };

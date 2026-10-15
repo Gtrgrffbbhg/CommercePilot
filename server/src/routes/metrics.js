@@ -23,5 +23,14 @@ export function createMetricsRouter(metricsService) {
     }
   });
 
+  router.get('/order-breakdown', validate({ query: summaryQuerySchema }), async (req, res, next) => {
+    try {
+      const breakdown = await metricsService.getOrderBreakdown(req.query);
+      res.json(breakdown);
+    } catch (err) {
+      next(err);
+    }
+  });
+
   return router;
 }

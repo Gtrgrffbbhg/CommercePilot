@@ -115,6 +115,18 @@ All dates are serialized as ISO-8601 UTC strings (e.g., `2026-10-15T00:00:00.000
 - `points`: Continuous zero-filled array of `{ date, revenue, orders, newCustomers }`.
 - Invariant: `sum(points.revenue) === summary.kpis.revenue` for identical date windows.
 
+### 4.3 Order Breakdown Metrics (`GET /api/metrics/order-breakdown`)
+- `range`: `{ from: ISOString, to: ISOString }`
+- `currency`: 3-letter currency code (`USD`)
+- `byStatus`: Array of status breakdown entries covering all 7 lifecycle statuses:
+  - `status`: `'pending' \| 'processing' \| 'on-hold' \| 'completed' \| 'cancelled' \| 'refunded' \| 'failed'` (in exact `ORDER_STATUSES` order, zero-filled for missing statuses)
+  - `orders`: Total count of orders with this status in the date range.
+  - `total`: Total dollar value of orders with this status in the date range.
+- `byCategory`: Array of item sales by product category for orders in `REVENUE_STATUSES` (`processing`, `completed`), sorted by `itemSales` descending:
+  - `category`: Product taxonomy category name.
+  - `units`: Total units sold in period across revenue-generating orders.
+  - `itemSales`: Line item gross total before order-level discounts and taxes.
+
 ---
 
 ## Planned WooCommerce mapping (NOT YET VERIFIED against a real API)

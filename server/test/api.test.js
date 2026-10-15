@@ -2,13 +2,16 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import request from 'supertest';
 import { createApp } from '../src/app.js';
 import { createDemoRepository } from '../src/repositories/demoRepository.js';
+import { orderBreakdownSchema } from '../src/schemas/metrics.js';
+import { ORDER_STATUSES, REVENUE_STATUSES } from '../src/constants.js';
 
 describe('Server API Endpoints', () => {
   let app;
+  let repository;
   const fixedNow = new Date('2026-10-15T00:00:00.000Z');
 
   beforeAll(() => {
-    const repository = createDemoRepository({ seed: 42, now: fixedNow });
+    repository = createDemoRepository({ seed: 42, now: fixedNow });
     app = createApp({
       repository,
       config: {
@@ -141,6 +144,64 @@ describe('Server API Endpoints', () => {
       const timeseriesRevenueSum = timeseriesRes.body.points.reduce((sum, p) => sum + Math.round(p.revenue * 100), 0) / 100;
 
       expect(Number(timeseriesRevenueSum.toFixed(2))).toBe(summaryRevenue);
+    });
+
+    it('GET /api/metrics/order-breakdown reconciles with orders, summary and catalog sales', async () => {
+      const from = '2026-09-01T00:00:00.000Z';
+      const to = '2026-10-01T00:00:00.000Z';
+
+      const breakdownRes = await request(app).get(`/api/metrics/order-breakdown?from=${from}&to=${to}`);
+      expect(breakdownRes.status).toBe(200);
+      expect(breakdownRes.headers['x-data-source']).toBe('demo');
+
+      // Validates against orderBreakdownSchema
+      const parseResult = orderBreakdownSchema.safeParse(breakdownRes.body);
+      expect(parseResult.success).toBe(true);
+
+      // All 7 statuses present in exact ORDER_STATUSES order
+      expect(breakdownRes.body.byStatus.length).toBe(7);
+      expect(breakdownRes.body.byStatus.map((s) => s.status)).toEqual(ORDER_STATUSES);
+
+      // Sum of byStatus.orders equals count of orders in range from /api/orders
+      const ordersRes = await request(app).get(`/api/orders?from=${from}&to=${to}&pageSize=1`);
+      const totalStatusOrders = breakdownRes.body.byStatus.reduce((sum, s) => sum + s.orders, 0);
+      expect(totalStatusOrders).toBe(ordersRes.body.pagination.total);
+
+      // Sum of byStatus.orders over REVENUE_STATUSES equals summary.kpis.orders
+      const summaryRes = await request(app).get(`/api/metrics/summary?from=${from}&to=${to}`);
+      const revenueStatusOrders = breakdownRes.body.byStatus
+        .filter((s) => REVENUE_STATUSES.includes(s.status))
+        .reduce((sum, s) => sum + s.orders, 0);
+      expect(revenueStatusOrders).toBe(summaryRes.body.kpis.orders);
+
+      // Sum of byCategory.itemSales equals the sum of subtotal across revenue-status orders in range (+-0.01)
+      const rangeOrders = await repository.getOrdersInRange(from, to);
+      const revenueOrders = rangeOrders.filter((o) => REVENUE_STATUSES.includes(o.status));
+      const expectedSubtotalSum = revenueOrders.reduce((sum, o) => sum + Math.round(o.subtotal * 100), 0) / 100;
+      const actualItemSalesSum = breakdownRes.body.byCategory.reduce((sum, c) => sum + Math.round(c.itemSales * 100), 0) / 100;
+      expect(Math.abs(actualItemSalesSum - expectedSubtotalSum)).toBeLessThanOrEqual(0.01);
+    });
+
+    it('GET /api/metrics/order-breakdown returns zero-filled statuses and empty categories for empty range', async () => {
+      const from = '2020-01-01T00:00:00.000Z';
+      const to = '2020-01-02T00:00:00.000Z';
+
+      const res = await request(app).get(`/api/metrics/order-breakdown?from=${from}&to=${to}`);
+      expect(res.status).toBe(200);
+      expect(res.body.byStatus.length).toBe(7);
+      for (const item of res.body.byStatus) {
+        expect(item.orders).toBe(0);
+        expect(item.total).toBe(0);
+      }
+      expect(res.body.byCategory).toEqual([]);
+    });
+
+    it('GET /api/metrics/order-breakdown rejects from > to with HTTP 400', async () => {
+      const res = await request(app).get(
+        '/api/metrics/order-breakdown?from=2026-10-15T00:00:00.000Z&to=2026-10-01T00:00:00.000Z'
+      );
+      expect(res.status).toBe(400);
+      expect(res.body.error.code).toBe('VALIDATION_ERROR');
     });
   });
 

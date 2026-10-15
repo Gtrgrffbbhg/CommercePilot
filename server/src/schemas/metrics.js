@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ORDER_STATUSES } from '../constants.js';
 
 export const kpiSetSchema = z.object({
   revenue: z.number().nonnegative(),
@@ -41,6 +42,28 @@ export const timeseriesPointSchema = z.object({
 export const timeseriesMetricsSchema = z.object({
   interval: z.enum(['day', 'week', 'month']),
   points: z.array(timeseriesPointSchema),
+});
+
+export const orderBreakdownSchema = z.object({
+  range: z.object({
+    from: z.string().datetime(),
+    to: z.string().datetime(),
+  }),
+  currency: z.string().length(3),
+  byStatus: z.array(
+    z.object({
+      status: z.enum(ORDER_STATUSES),
+      orders: z.number().int().nonnegative(),
+      total: z.number().nonnegative(),
+    })
+  ),
+  byCategory: z.array(
+    z.object({
+      category: z.string(),
+      units: z.number().int().nonnegative(),
+      itemSales: z.number().nonnegative(),
+    })
+  ),
 });
 
 export const summaryQuerySchema = z

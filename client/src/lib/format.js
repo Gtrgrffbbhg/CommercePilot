@@ -12,11 +12,33 @@ export function formatCurrency(amount, currency = 'USD') {
   }).format(amount);
 }
 
+export function formatCompactCurrency(amount, currency = 'USD') {
+  if (amount === null || amount === undefined || isNaN(amount)) {
+    return '$0';
+  }
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  }).format(amount);
+}
+
 export function formatNumber(val) {
   if (val === null || val === undefined || isNaN(val)) {
     return '0';
   }
   return new Intl.NumberFormat('en-US').format(val);
+}
+
+export function formatCompactNumber(val) {
+  if (val === null || val === undefined || isNaN(val)) {
+    return '0';
+  }
+  return new Intl.NumberFormat('en-US', {
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  }).format(val);
 }
 
 export function formatDate(isoString) {
@@ -26,6 +48,21 @@ export function formatDate(isoString) {
     if (isNaN(d.getTime())) return '—';
     return d.toLocaleDateString('en-US', {
       year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      timeZone: 'UTC',
+    });
+  } catch {
+    return '—';
+  }
+}
+
+export function formatShortDate(isoString) {
+  if (!isoString) return '—';
+  try {
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return '—';
+    return d.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
       timeZone: 'UTC',
