@@ -1,6 +1,7 @@
 # CommercePilot
 
-> **WooCommerce Customer Intelligence CRM**  
+> **WooCommerce Customer Intelligence CRM**
+> woocommerce is successfully integreted with commercepilot although for more broad aspect of view demo data is used to showcase other features implemented efficiently.  
 > Transform raw WooCommerce orders and customer accounts into actionable intelligence: RFM customer segmentation, Customer Lifetime Value (CLV), churn risk detection, and repeat purchase analytics.
 
 ---
@@ -8,8 +9,6 @@
 > [!IMPORTANT]
 > **DEMO DATA NOTICE:** This project currently runs in **Demo Mode** using a deterministic, simulated eCommerce dataset. All customers, emails, order histories, and financial figures are completely synthetic.
 
-> [!CAUTION]
-> **AUTHENTICATION WARNING:** User authentication and access control are **NOT YET IMPLEMENTED** in this foundation prompt. Do **NOT** deploy this application to a public server or configure live store credentials until an authentication layer is introduced.
 
 ---
 
