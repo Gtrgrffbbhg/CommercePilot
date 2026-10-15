@@ -9,6 +9,8 @@ import { formatCurrency, formatNumber, formatDate, formatPercent } from '../lib/
 export function FoundationCheck() {
   const { data: health, error: healthError, reload: reloadHealth } = useApi('/api/health');
   const { data: wcHealth, loading: wcLoading, error: wcError, reload: reloadWcHealth } = useApi('/api/woocommerce/health');
+  const { data: wcProducts, loading: wcProductsLoading } = useApi('/api/woocommerce/products?per_page=5');
+  const { data: wcOrders, loading: wcOrdersLoading } = useApi('/api/woocommerce/orders?per_page=5');
   const { data: meta, loading: metaLoading, error: metaError, reload: reloadMeta } = useApi('/api/meta');
   const { data: summary, loading: summaryLoading, error: summaryError, reload: reloadSummary } = useApi('/api/metrics/summary');
   const { data: customersData, loading: customersLoading, error: customersError, reload: reloadCustomers } = useApi('/api/customers?pageSize=5');
@@ -85,6 +87,63 @@ export function FoundationCheck() {
               </span>
             </div>
           </div>
+
+          {/* Live WooCommerce Catalog & Order Preview when connected */}
+          {wcHealth?.connected && (
+            <div className="mt-4 pt-4 border-t border-slate-800 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-slate-950/40 rounded-lg p-3 border border-slate-800/80">
+                <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-800/60">
+                  <span className="text-xs font-semibold text-emerald-400 flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                    Live Products (/api/woocommerce/products)
+                  </span>
+                  <span className="text-[10px] font-mono text-slate-400">
+                    {wcProducts?.total ?? 0} found
+                  </span>
+                </div>
+                {wcProductsLoading ? (
+                  <div className="py-4"><Spinner /></div>
+                ) : wcProducts?.data?.length > 0 ? (
+                  <div className="space-y-1.5 text-xs font-mono">
+                    {wcProducts.data.slice(0, 4).map((p) => (
+                      <div key={p.id} className="flex justify-between items-center text-slate-300 bg-slate-900/60 px-2 py-1.5 rounded">
+                        <span className="truncate max-w-[180px] font-sans text-slate-200">{p.name}</span>
+                        <span className="text-emerald-400 font-medium">₹{p.price || '0.00'}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-500 py-2">No products found in store.</p>
+                )}
+              </div>
+
+              <div className="bg-slate-950/40 rounded-lg p-3 border border-slate-800/80">
+                <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-800/60">
+                  <span className="text-xs font-semibold text-emerald-400 flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                    Live Orders (/api/woocommerce/orders)
+                  </span>
+                  <span className="text-[10px] font-mono text-slate-400">
+                    {wcOrders?.total ?? 0} found
+                  </span>
+                </div>
+                {wcOrdersLoading ? (
+                  <div className="py-4"><Spinner /></div>
+                ) : wcOrders?.data?.length > 0 ? (
+                  <div className="space-y-1.5 text-xs font-mono">
+                    {wcOrders.data.slice(0, 4).map((o) => (
+                      <div key={o.id} className="flex justify-between items-center text-slate-300 bg-slate-900/60 px-2 py-1.5 rounded">
+                        <span className="text-slate-200 font-sans">Order #{o.id} ({o.status})</span>
+                        <span className="text-emerald-400 font-medium">₹{o.total}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-500 py-2">No orders found in store.</p>
+                )}
+              </div>
+            </div>
+          )}
         </section>
 
         {/* Global Connection Alert if health fails */}
