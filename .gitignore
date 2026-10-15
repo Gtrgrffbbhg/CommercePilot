@@ -1,0 +1,30 @@
+# Dependencies
+node_modules
+node_modules/
+
+# Environment files & secrets
+.env
+.env.*
+!.env.example
+secrets/
+*.pem
+*.key
+
+# Production & compiler outputs
+dist
+dist/
+build
+build/
+.vite/
+
+# Testing coverage
+coverage
+coverage/
+
+# Logs
+logs/
+*.log
+
+# OS metadata
+.DS_Store
+Thumbs.db
